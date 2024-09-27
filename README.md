@@ -34,7 +34,7 @@ Following parameters are supported. Send them as form-data form-urlencoded or as
 | `preferCSSPageSize`   | `boolean` | **Optional**. Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size |
 | `waitUntil`           | `string`  | **Optional**. Parameter to consider waiting succeeds when page is loading. Should be 'load', 'domcontentloaded', 'networkidle0' or 'networkidle2'. Default to 'networkidle0';                                    |
 | `scrollPage`          | `boolean` | **Optional**. Make the browser wait until network idle, then scroll to bottom and finally wait again for network idle. Defaults to false.                                                                        |
-| `viewportDimensions`  | `string`  | **Optional**. Viewport width and height (eg 800x400) in px                                                                                                                                                       |
+
 
 Since most of these options are forwarded to puppeteer, a more detailed description might be available
 at https://www.jsdocs.io/package/puppeteer-core/v/13.7.0#PDFOptions.

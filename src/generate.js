@@ -39,13 +39,6 @@ module.exports = async function (req, res) {
     try {
         const page = await global.browser.newPage();
 
-        if (req.body['viewportDimensions']) {
-            await page.setViewport({
-                width: Number(req.body['viewportDimensions'].split('x')[0]),
-                height: Number(req.body['viewportDimensions'].split('x')[1])
-            });
-        }
-
         if (req.body.url) {
             let response = await page.goto(req.body.url, {waitUntil: req.body['waitUntil'] ?? 'networkidle0'});
             if (response.status() >= 400) {

@@ -81,6 +81,5 @@ module.exports.register = function (app) {
             return true;
         }),
         check('scrollPage').isBoolean().optional(),
-        check('viewportDimensions').matches(/\d+x\d+/).optional()
     ], require('./generate'));
 }
