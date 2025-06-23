@@ -47,7 +47,19 @@ module.exports = async function (req, res) {
         }
 
         if (req.body.url) {
-            let response = await page.goto(req.body.url, {waitUntil: req.body['waitUntil'] ?? 'networkidle0'});
+            let response = await page.goto(req.body.url);
+
+            if (req.body['waitForPageLoadedEvent']) {
+                await page.evaluate(() => {
+                    window.pageLoaded = false;
+                    window.addEventListener('pageLoaded', () => {
+                        window.pageLoaded = true;
+                    })
+                });
+            }
+
+            await page.waitForNetworkIdle(req.body['waitUntil'] ?? 'networkidle0');
+
             if (response.status() >= 400) {
                 return res.status(400).json({
                     success: false,
@@ -58,16 +70,22 @@ module.exports = async function (req, res) {
             await page.setContent(req.body.html);
         }
 
+        await page.evaluateHandle('document.fonts.ready');
+
+        if (req.body['waitForPageLoadedEvent']) {
+            await waitForPageLoaded(page);
+        }
+
         if (req.body['scrollPage']) {
             await scrollPage(page);
         }
-
         const bytes = await page.pdf(pdfOptions);
         await page.close();
 
         res.set("Content-Type", "application/octet-stream")
         res.set("Content-Disposition", `attachment;filename=${req.body['filename'] || 'generated-file'}.pdf`)
         return res.status(200).send(Buffer.from(bytes, 'binary'))
+
     } catch (error) {
         try {
             await page.close()
@@ -77,6 +95,26 @@ module.exports = async function (req, res) {
         return res.status(500).json({success: false, errors: [{msg: `Internal error : ${error.message}`}]})
     }
 }
+
+
+async function waitForPageLoaded(page) {
+    let nTries = 0;
+    const MAX_TRIES = 60;
+    const TRY_DELAY_MS = 1000;
+    let pageLoaded = false;
+    await new Promise((resolve) => {
+        const watcherPageLoading = setInterval(async function () {
+            pageLoaded = await page.evaluate(() => window.pageLoaded);
+            if (!pageLoaded && nTries < MAX_TRIES) {
+                nTries++;
+                return;
+            }
+            clearInterval(watcherPageLoading);
+            resolve();
+        }, TRY_DELAY_MS)
+    })
+}
+
 
 async function scrollPage(page) {
     // scroll to the end of page step by step
