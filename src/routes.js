@@ -80,6 +80,7 @@ module.exports.register = function (app) {
             }
             return true;
         }),
+        check('waitForPageLoadedEvent').isBoolean().optional(),
         check('scrollPage').isBoolean().optional(),
         check('viewportDimensions').matches(/\d+x\d+/).optional()
     ], require('./generate'));
