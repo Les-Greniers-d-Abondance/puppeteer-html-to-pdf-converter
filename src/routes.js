@@ -9,6 +9,7 @@ module.exports.register = function (app) {
             require_tld: false
         }).optional(),
         check('html').optional(),
+        check('exportFormat').matches(/^(pdf|png)$/).optional(),
         check('filename').optional(),
         check('url_html').custom((value, {req}) => {
             if (!req.body.html && !req.body.url) {
