@@ -79,11 +79,18 @@ module.exports = async function (req, res) {
         if (req.body['scrollPage']) {
             await scrollPage(page);
         }
-        const bytes = await page.pdf(pdfOptions);
+
+        let bytes;
+        if (req.body['exportFormat'] === 'png') {
+            bytes = await page.screenshot({ type: 'png' });
+        } else {
+            bytes = await page.pdf(pdfOptions);
+        }
+
         await page.close();
 
         res.set("Content-Type", "application/octet-stream")
-        res.set("Content-Disposition", `attachment;filename=${req.body['filename'] || 'generated-file'}.pdf`)
+        res.set("Content-Disposition", `attachment;filename=${req.body['filename'] || 'generated-file'}.${req.body['exportFormat']}`)
         return res.status(200).send(Buffer.from(bytes, 'binary'))
 
     } catch (error) {

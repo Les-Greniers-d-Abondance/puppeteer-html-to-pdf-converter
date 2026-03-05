@@ -17,14 +17,13 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-body-parser-error-handler": "^1.0.7",
-    "express-slow-down": "^2.0.3",
     "express-rate-limit": "^7.4.0",
+    "express-slow-down": "^2.0.3",
     "express-validator": "^7.2.0",
     "morgan": "^1.10.0",
-    "puppeteer": "^23.3.0"
+    "puppeteer": "^24.37.1"
   },
   "engines": {
     "node": ">=16"
   }
 }
-

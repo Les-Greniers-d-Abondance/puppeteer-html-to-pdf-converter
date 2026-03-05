@@ -1,8 +1,22 @@
-# HTML to PDF converter HTTP API
+# HTML to PDF/PNG converter HTTP API
 
-This is a cloud ready HTML to PDF converter application running inside docker accessible via an HTTP API.
+This is a cloud ready HTML to PDF/PNG converter application accessible via an HTTP API.
 
-## HTT API Usage
+This repo is based on https://github.com/ideadapt/puppeteer-html-to-pdf-converter
+
+We've made the following changes :
+
+    feat: add the exportFormat to choose between pdf (default) and png
+    feat: add mecanism of awaiting loading based on client event emetting
+    fix : fix missing cors in rate limiter error responses
+    feat: add the a allowlist option in the config
+    feat: add the ability to rate limit calls to the api (in addition to delay)
+    feat: use slowDown only on POST requests, and not on OPTION requests
+    feat: return an error with appropriate status code
+    feat: add 3 options : scrollAndWaitForLoading, to make the browser scroll to bottom and wait for loading content / viewportWidth & viewportHeight to set the viewport of the page
+    chore: upgrade dependencies and node version
+
+## HTTP API Usage
 
 ### `POST /api/generate`
 
@@ -12,30 +26,31 @@ The number of requests (per client or globally) can be limited, see the configur
 
 Following parameters are supported. Send them as form-data form-urlencoded or as raw json.
 
-| Parameter               | Type      | Description                                                                                                                                                                                                      |
-|:----------------------|:----------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `url`                   | `string`  | **Required if no html**. The url of the webpage to convert to PDF                                                                                                                                                |
-| `html`                  | `string`  | **Required if no url**. The html to convert to PDF. String length is by default limited to 1 mega byte.                                                                                                          |
-| `filename`              | `string`  | **Optional**. The name of generated PDF file in the download response, without extension. Defaults to `generated-file`.                                                                                          |
-| `scale`                 | `string`  | **Optional**. Scale of the webpage rendering. Scale amount must be between 0.1 and 2. Defaults to 1.                                                                                                             |
-| `displayHeaderFooter`   | `boolean` | **Optional**. Display header and footer. Defaults to `false `                                                                                                                                                    |
-| `headerTemplate`        | `string`  | **Optional**. HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them: `date`, `title`, `url`, `pageNumber`, `totalPages`                |
-| `footerTemplate`        | `string`  | **Optional**. HTML template for the print footer. Should use the same format as the `headerTemplate`                                                                                                             |
-| `printBackground`       | `boolean` | **Optional**. Print background graphics. Defaults to `false`                                                                                                                                                     |
-| `landscape`             | `boolean` | **Optional**. Paper orientation. Defaults to `false`                                                                                                                                                             |
-| `pageRanges`            | `string`  | **Optional**. Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages                                                                                            |
-| `format`                | `string`  | **Optional**. Paper format. If set, takes priority over width or height options. Defaults to 'A4'                                                                                                                |
-| `width`                 | `integer` | **Optional**. Paper width, accepts values labeled with units                                                                                                                                                     |
-| `height`                | `integer` | **Optional**. Paper height, accepts values labeled with units                                                                                                                                                    |
-| `margin.top`            | `integer` | **Optional**. Top margin, accepts values labeled with units. Defaults to `0`                                                                                                                                     |
-| `margin.right`          | `integer` | **Optional**. Right margin, accepts values labeled with units. Defaults to `0`                                                                                                                                   |
-| `margin.bottom`         | `integer` | **Optional**. Bottom margin, accepts values labeled with units. Defaults to `0`                                                                                                                                  |
-| `margin.left`           | `integer` | **Optional**. Left margin, accepts values labeled with units. Defaults to `0`                                                                                                                                    |
-| `preferCSSPageSize`     | `boolean` | **Optional**. Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size |
-| `waitUntil`             | `string`  | **Optional**. Parameter to consider waiting succeeds when page is loading. Should be 'load', 'domcontentloaded', 'networkidle0' or 'networkidle2'. Default to 'networkidle0';          
-| `waitForPageLoadedEvent`| `boolean`  | **Optional**. If True, it will wait until the custom event "pageLoaded" is emitted by the page. Default to false;                          |
-| `scrollPage`            | `boolean` | **Optional**. Make the browser wait until network idle, then scroll to bottom and finally wait again for network idle. Defaults to false.                                                                        |
-| `viewportDimensions`    | `string`  | **Optional**. Viewport width and height (eg 800x400) in px                                                                                                                                                       |
+| Parameter                      | Type      | Description                                                                                                                                                                                                                           |
+|:-------------------------------|:----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `url`                          | `string`  | **Required if no html**. The url of the webpage to convert to PDF                                                                                                                                                                     |
+| `html`                         | `string`  | **Required if no url**. The html to convert to PDF. String length is by default limited to 1 mega byte.                                                                                                                               |                                                                                                                               
+| `exportFormat`                 | `string`  | **Optional**. The export format `pdf` or `png`. Default to `pdf`.                                                                                                                                                                     |
+| `filename`                     | `string`  | **Optional**. The name of generated PDF file in the download response, without extension. Defaults to `generated-file`.                                                                                                               |
+| `scale`                        | `string`  | **Optional**. For export PDF only. Scale of the webpage rendering. Scale amount must be between 0.1 and 2. Defaults to 1.                                                                                                             |
+| `displayHeaderFooter`          | `boolean` | **Optional**. For export PDF only. Display header and footer. Defaults to `false`                                                                                                                                                     |
+| `headerTemplate`               | `string`  | **Optional**. For export PDF only. HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them: `date`, `title`, `url`, `pageNumber`, `totalPages`                |
+| `footerTemplate`               | `string`  | **Optional**. For export PDF only. HTML template for the print footer. Should use the same format as the `headerTemplate`                                                                                                             |
+| `printBackground`              | `boolean` | **Optional**. For export PDF only. Print background graphics. Defaults to `false`                                                                                                                                                     |
+| `landscape`                    | `boolean` | **Optional**. For export PDF only. Paper orientation. Defaults to `false`                                                                                                                                                             |
+| `pageRanges`                   | `string`  | **Optional**. For export PDF only. Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages                                                                                            |
+| `format`                       | `string`  | **Optional**. For export PDF only. Paper format. If set, takes priority over width or height options. Defaults to 'A4'                                                                                                                |
+| `width`                        | `integer` | **Optional**. For export PDF only. Paper width, accepts values labeled with units                                                                                                                                                     |
+| `height`                       | `integer` | **Optional**. For export PDF only. Paper height, accepts values labeled with units                                                                                                                                                    |
+| `margin.top`                   | `integer` | **Optional**. For export PDF only. Top margin, accepts values labeled with units. Defaults to `0`                                                                                                                                     |
+| `margin.right`                 | `integer` | **Optional**. For export PDF only. Right margin, accepts values labeled with units. Defaults to `0`                                                                                                                                   |
+| `margin.bottom`                | `integer` | **Optional**. For export PDF only. Bottom margin, accepts values labeled with units. Defaults to `0`                                                                                                                                  |
+| `margin.left`                  | `integer` | **Optional**. For export PDF only. Left margin, accepts values labeled with units. Defaults to `0`                                                                                                                                    |
+| `preferCSSPageSize`            | `boolean` | **Optional**. For export PDF only. Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size |
+| `waitUntil`                    | `string`  | **Optional**. Parameter to consider waiting succeeds when page is loading. Should be 'load', 'domcontentloaded', 'networkidle0' or 'networkidle2'. Default to 'networkidle0';                                                         |        
+| `waitForPageLoadedEvent`       | `boolean` | **Optional**. If True, it will wait until the custom event "pageLoaded" is emitted by the page. Default to false;                                                                                                                     |
+| `scrollPage`                   | `boolean` | **Optional**. Make the browser wait until network idle, then scroll to bottom and finally wait again for network idle. Defaults to false.                                                                                             |
+| `viewportDimensions`           | `string`  | **Optional**. Viewport width and height (eg 800x400) in px                                                                                                                                                                            |
 
 Since most of these options are forwarded to puppeteer, a more detailed description might be available
 at https://www.jsdocs.io/package/puppeteer-core/v/13.7.0#PDFOptions.
@@ -59,16 +74,13 @@ If one of the parameters was invalid the response will look something like:
 }
 ```
 
-## Demo Client Application
-
-Go to https://html2pdf.fly.dev
 
 ## Installation
 
 1. Clone the repo
 
 ```
-git clone https://github.com/ideadapt/puppeteer-html-to-pdf-converter.git
+git clone https://github.com/Les-Greniers-d-Abondance/puppeteer-html-to-pdf-converter.git
 ```
 
 2. Navigate in the project directory
@@ -148,27 +160,12 @@ Example `config.json`:
 }
 ```
 
-## Implementation Details
-
-This repo is based on https://github.com/fritsvt/puppeteer-html-to-pdf-converter.git.
-
-The following changes were applied:
-
-- Containerize application. This allows running the whole application (including puppeteer) on any platform that has
-  docker installed. \
-  This is a major benefit, because properly installing puppeteer is cumbersome, depending on the platform.
-- Changed response format from a temporary URL to a file download (binary stream). \
-  This reduced the complexity and platform requirements on the server side, because the generated PDF files are not
-  stored on the disk anymore.
-- Make request body size limit configurable.
-- Bug fixes: Margin parameter validation fixes. Errors are returned as JSON, not plain text.
-
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 
-This repo is based on https://github.com/fritsvt/puppeteer-html-to-pdf-converter.git .
+This repo is based on https://github.com/ideadapt/puppeteer-html-to-pdf-converter.
 
 [MIT](LICENSE)
