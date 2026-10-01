@@ -111,6 +111,27 @@ npm install
 npm run start
 ```
 
+#### Using a system-installed Chrome instead of Puppeteer's bundled one
+
+On some hosts (e.g. Ubuntu 23.10+, where AppArmor restricts unprivileged user namespaces), the Chrome that Puppeteer
+downloads for itself fails to start its sandbox with `No usable sandbox!`. To avoid that, install Chrome system-wide
+and point the app at it instead of letting Puppeteer download and manage its own copy:
+
+```
+PUPPETEER_SKIP_DOWNLOAD=true npm install
+```
+
+Then set `CHROME_EXECUTABLE_PATH` in `config.json` (or as an env var) to the real Chrome binary — not a wrapper
+script. For example, on Debian/Ubuntu with `google-chrome-stable` installed, `/usr/bin/google-chrome` is a wrapper;
+resolve it first:
+
+```
+readlink -f /usr/bin/google-chrome
+```
+
+and use the resolved path (typically `/opt/google/chrome/chrome`) as `CHROME_EXECUTABLE_PATH`. This keeps Chrome's
+sandbox enabled, unlike launching with `--no-sandbox`.
+
 ### Docker
 
 5. Build the docker image
@@ -140,6 +161,7 @@ Config is read from a `config.json` file in the root folder of the project.
 | `RATE_LIMIT_GLOBAL_REJECT_AFTER` | Previous rate limit settings are applied per user (based on IP). If defined, this setting will define a global rate limit for all users. Can be combined either with `RATE_LIMIT_REJECT_AFTER` or `RATE_LIMIT_DELAY_AFTER`. | No                                                                                                                | 100     |
 | `TRUST_PROXY`                    | Set it to true if the server is behind a proxy.                                                                                                                                                                             | No                                                                                                                | true    |
 | `URL_ALLOWLIST`                  | A list of authorized URLs. If this config is defined : 1) "url" values provided in the body should start whith one of the url in the allowlist, 2) "html" content provided in the body is rejected                          | No       | "https://domaineone.com,https://domainetwo.com" |
+| `CHROME_EXECUTABLE_PATH`         | Path to a system-installed Chrome/Chromium binary. If set, Puppeteer uses it instead of the Chrome it downloads itself. Useful on hosts (e.g. Ubuntu 23.10+) where AppArmor restricts unprivileged user namespaces and the bundled Chrome fails to start its sandbox with `No usable sandbox!`. | No | "/opt/google/chrome/chrome" |
 
 
 A list of authorized URLs can be provided in the `URL_ALLOWLIST` parameter. If this parameter is not provided, all URLs are authorized.
